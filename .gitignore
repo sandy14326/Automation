@@ -1,0 +1,15 @@
+# Node dependencies
+node_modules/
+dist/
+build/
+npm-debug.log*
+
+# Environment keys and databases
+.env
+.env.local
+*.sqlite
+database.sqlite
+
+# OS files
+.DS_Store
+Thumbs.db
