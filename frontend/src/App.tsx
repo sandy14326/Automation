@@ -1428,7 +1428,9 @@ export default function App() {
                       {linkedinAccounts.map(acc => (
                         <div key={acc.id} className="flex-between" style={{ padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}>
                           <div>
-                            <span style={{ fontSize: '0.875rem', fontWeight: 600, display: 'block' }}>{acc.name}</span>
+                            <span style={{ fontSize: '0.875rem', fontWeight: 600, display: 'block' }}>
+                               {acc.id === 'acc-1' && currentUser ? `${currentUser.fullName} (Personal Profile)` : acc.name}
+                            </span>
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Type: {acc.type}</span>
                           </div>
                           <span className={`badge ${acc.connected ? 'badge-success' : 'badge-error'}`}>{acc.status}</span>
@@ -2291,7 +2293,9 @@ export default function App() {
                     {linkedinAccounts.map(acc => (
                       <div key={acc.id} className="flex-between" style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}>
                         <div>
-                          <strong>{acc.name}</strong>
+                          <strong>
+                            {acc.id === 'acc-1' && currentUser ? `${currentUser.fullName} (Personal Profile)` : acc.name}
+                          </strong>
                           <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>Type: {acc.type}</div>
                         </div>
                         <div className="flex-center gap-sm">

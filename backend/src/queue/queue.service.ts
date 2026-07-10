@@ -1,6 +1,8 @@
 import { Injectable, OnModuleInit, NotFoundException } from '@nestjs/common';
+import { LinkedinService } from '../linkedin/linkedin.service';
 import * as sqlite3 from 'sqlite3';
 import * as path from 'path';
+import * as https from 'https';
 
 export interface QueueItem {
   id: string;
@@ -21,6 +23,8 @@ export class QueueService implements OnModuleInit {
   private db: sqlite3.Database;
   private readonly dbPath = path.resolve(process.cwd(), '../database.sqlite');
 
+  constructor(private readonly linkedinService: LinkedinService) {}
+
   onModuleInit() {
     this.db = new sqlite3.Database(this.dbPath, (err) => {
       if (err) {
@@ -28,12 +32,13 @@ export class QueueService implements OnModuleInit {
       } else {
         console.log('[QueueService] Database connected successfully.');
         this.verifySchema();
+        // Start background publisher worker checking for scheduled posts every 10 seconds
+        setInterval(() => this.processScheduledPublishing(), 10000);
       }
     });
   }
 
   private verifySchema() {
-    // Ensures tables exist in case AuthService hasn't boot-created them yet
     const blogPostsQuery = `
       CREATE TABLE IF NOT EXISTS blog_posts (
         id TEXT PRIMARY KEY,
@@ -61,6 +66,121 @@ export class QueueService implements OnModuleInit {
     });
     this.db.run(queueQuery, (err) => {
       if (err) console.error('[QueueService] Failed to create publishing_queue table:', err.message);
+    });
+  }
+
+  /**
+   * Background publisher loop executing scheduled queue items automatically
+   */
+  private async processScheduledPublishing() {
+    const nowStr = new Date().toISOString();
+    const query = `
+      SELECT q.id as queue_id, q.post_id, q.user_id, p.title, p.linkedin_post_content, u.phoneNumber
+      FROM publishing_queue q
+      JOIN blog_posts p ON q.post_id = p.id
+      JOIN users u ON q.user_id = u.id
+      WHERE q.status = 'scheduled' AND (q.scheduledTime IS NULL OR q.scheduledTime <= ?);
+    `;
+
+    this.db.all(query, [nowStr], async (err, rows: any[]) => {
+      if (err) {
+        console.error('[QueueService] Error querying scheduled posts:', err.message);
+        return;
+      }
+
+      if (!rows || rows.length === 0) return;
+
+      for (const item of rows) {
+        console.log(`[QueueService] Found scheduled post ready to publish: "${item.title}" (Queue ID: ${item.queue_id})`);
+
+        const token = process.env.LINKEDIN_ACCESS_TOKEN;
+        const urn = process.env.LINKEDIN_MEMBER_URN;
+
+        let publishLog = '';
+        let success = true;
+        let shareUrn = '';
+
+        try {
+          const result = await this.linkedinService.publishShare(token, urn, item.linkedin_post_content);
+          shareUrn = result.shareUrn;
+          publishLog = `\n\nLive Link: https://linkedin.com/feed/update/${shareUrn}`;
+        } catch (publishErr) {
+          console.error(`[QueueService] Direct LinkedIn publishing failed for post ${item.queue_id}:`, publishErr.message);
+          publishLog = `\n\n(Error: ${publishErr.message})`;
+          success = false;
+        }
+
+        // Update queue item state to published (or failed)
+        const finalStatus = success ? 'published' : 'failed';
+        await this.updateQueueStatus(item.queue_id, finalStatus);
+
+        // Notify user via WhatsApp
+        if (item.phoneNumber) {
+          const cleanPhone = item.phoneNumber.replace(/\s+/g, '');
+          const messageText = success
+            ? `🚀 *[Autopilot Alert]* Your scheduled post *"${item.title}"* has been published live to your LinkedIn profile!${publishLog}`
+            : `⚠️ *[Autopilot Alert]* Failed to publish your scheduled post *"${item.title}"* to LinkedIn.${publishLog}`;
+
+          try {
+            await this.sendTwilioSms(cleanPhone, messageText);
+          } catch (smsErr) {
+            console.error(`[QueueService] Failed to send WhatsApp alert to ${cleanPhone}:`, smsErr.message);
+          }
+        }
+      }
+    });
+  }
+
+  /**
+   * Helper HTTPS POST request mapping to Twilio Messages API
+   */
+  private sendTwilioSms(to: string, body: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const sid = process.env.TWILIO_ACCOUNT_SID;
+      const token = process.env.TWILIO_AUTH_TOKEN;
+      const from = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886';
+
+      if (!sid || !token || sid.startsWith('your_') || token.startsWith('your_')) {
+        return resolve(null);
+      }
+
+      const cleanTo = to.startsWith('whatsapp:') ? to : `whatsapp:${to}`;
+      const cleanFrom = from.startsWith('whatsapp:') ? from : `whatsapp:${from}`;
+
+      const postData = new URLSearchParams({
+        To: cleanTo,
+        From: cleanFrom,
+        Body: body
+      }).toString();
+
+      const authHeaderValue = Buffer.from(`${sid}:${token}`).toString('base64');
+
+      const options = {
+        hostname: 'api.twilio.com',
+        path: `/2010-04-01/Accounts/${sid}/Messages.json`,
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${authHeaderValue}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': Buffer.byteLength(postData)
+        }
+      };
+
+      const req = https.request(options, (res) => {
+        let responseBody = '';
+        res.on('data', (chunk) => { responseBody += chunk; });
+        res.on('end', () => {
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            resolve(JSON.parse(responseBody));
+          } else {
+            reject(new Error(`Twilio status ${res.statusCode}: ${responseBody}`));
+          }
+        });
+      });
+
+      req.on('error', (e) => reject(e));
+      req.write(postData);
+      req.end();
     });
   }
 
