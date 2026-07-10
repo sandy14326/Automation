@@ -288,7 +288,6 @@ export default function App() {
         localStorage.setItem('auth_token', data.accessToken);
         setCurrentUser(data.user);
         setUserRole(data.user.role);
-        alert(`Welcome back, ${data.user.fullName}!`);
         navigateTo('dashboard');
       } else {
         alert(data.message || 'Invalid email or password.');
@@ -325,7 +324,6 @@ export default function App() {
       });
       const data = await response.json();
       if (response.ok) {
-        alert(data.message || 'OTP Code sent successfully!');
         if (data.debugOtpCode) {
           setDebugOtp(data.debugOtpCode);
         }
@@ -337,8 +335,9 @@ export default function App() {
     }
   };
 
-  const handleVerifyOtp = async () => {
-    if (!phoneInput || !otpInput) {
+  const handleVerifyOtp = async (codeOverride?: string) => {
+    const activeCode = codeOverride || otpInput;
+    if (!phoneInput || !activeCode) {
       alert('Please enter both your phone number and the OTP code received.');
       return;
     }
@@ -348,7 +347,7 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phoneNumber: phoneInput,
-          code: otpInput
+          code: activeCode
         })
       });
       const data = await response.json();
@@ -357,7 +356,6 @@ export default function App() {
         setCurrentUser(data.user);
         setUserRole(data.user.role);
         setDebugOtp(null);
-        alert(`Welcome back, ${data.user.fullName}!`);
         navigateTo('dashboard');
       } else {
         alert(data.message || 'Invalid or expired OTP code.');
@@ -391,7 +389,6 @@ export default function App() {
         setSyncedContacts(list);
         setSelectedContactPhones(list.map((c: any) => c.phoneNumber));
         setIsSyncingContacts(false);
-        alert(`Successfully fetched ${contactsList.length} live contacts from +91 9893854811!`);
         return;
       }
     } catch (e) {
@@ -410,7 +407,6 @@ export default function App() {
       setSyncedContacts(mockList);
       setSelectedContactPhones(mockList.map(c => c.phoneNumber));
       setIsSyncingContacts(false);
-      alert('Synced 5 contacts associated with +91 9893854811 successfully! (Sandbox Simulator)');
     }, 2000);
   };
 
@@ -464,7 +460,6 @@ export default function App() {
         clearInterval(interval);
         setIsBroadcasting(false);
         setBroadcastMessage('');
-        alert(`One-shot broadcast sent to ${total} selected contacts successfully!`);
         return;
       }
 
@@ -1120,15 +1115,18 @@ export default function App() {
                               <button 
                                 className="btn btn-secondary btn-sm"
                                 style={{ padding: '2px 6px', fontSize: '0.7rem' }}
-                                onClick={() => setOtpInput(debugOtp)}
+                                onClick={() => {
+                                  setOtpInput(debugOtp);
+                                  handleVerifyOtp(debugOtp);
+                                }}
                               >
-                                Auto-Fill
+                                Auto-Fill & Login
                               </button>
                             </div>
                           )}
                         </div>
                         
-                        <button className="btn btn-accent" style={{ width: '100%', padding: '0.75rem' }} onClick={handleVerifyOtp}>
+                        <button className="btn btn-accent" style={{ width: '100%', padding: '0.75rem' }} onClick={() => handleVerifyOtp()}>
                           Verify OTP & Authorize
                         </button>
                       </div>
