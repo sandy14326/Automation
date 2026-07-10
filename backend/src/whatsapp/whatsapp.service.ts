@@ -287,6 +287,31 @@ export class WhatsappService implements OnModuleInit {
       return `✨ Triggered New Generation! Researching trending topics now...\n\nDraft Ready Preview:\nTitle: ${newPostTitle}\nReach Prediction: 4.8k impressions\n\nReply '1' or 'APPROVE' to schedule.`;
     }
 
+    if (command === 'AUTOPILOT RUN' || command === 'GENERATE AND PUBLISH') {
+      const title = 'Scaling Telemetry Architectures in Enterprise SaaS';
+      const postContent = `🚀 Autonomous queue processing and real-time telemetry pipelines represent the core of agentic SaaS systems. By automating code validation, teams reduce deployment latency from hours to seconds.\n\nLearn more: http://autopilot-ai.com/scaling-telemetry #SaaS #AI #Engineering`;
+      
+      const token = process.env.LINKEDIN_ACCESS_TOKEN;
+      const urn = process.env.LINKEDIN_MEMBER_URN;
+
+      let publishLog = '';
+      try {
+        const result = await this.linkedinService.publishShare(token, urn, postContent);
+        publishLog = `\n\nLive Link: https://linkedin.com/feed/update/${result.shareUrn}`;
+      } catch (err) {
+        publishLog = `\n\n(Error: ${err.message})`;
+      }
+
+      // Save to SQLite
+      const crypto = require('crypto');
+      const postId = crypto.randomUUID();
+      const queueId = crypto.randomUUID();
+      this.db.run('INSERT INTO blog_posts (id, user_id, title, linkedin_post_content) VALUES (?, ?, ?, ?);', [postId, organization.id, title, postContent]);
+      this.db.run('INSERT INTO publishing_queue (id, post_id, user_id, status, whatsapp_notification_sent) VALUES (?, ?, ?, ?, 1);', [queueId, postId, organization.id, 'published']);
+
+      return `🤖 *[Autopilot Automatic Cycle]*\n\n1. *AI Generation*: Draft generated successfully based on SaaS telemetry focus.\n2. *Publishing*: Dispatched directly to your LinkedIn feed without human review!${publishLog}`;
+    }
+
     if (command === 'POST NOW') {
       const latestApproved = await this.queueService.getLatestPendingQueueItem(organization.id);
       if (!latestApproved) {

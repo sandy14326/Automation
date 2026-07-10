@@ -2884,6 +2884,7 @@ export default function App() {
             <button className="btn btn-secondary btn-sm" onClick={() => handleSendWhatsappMessage('GENERATE NEW')} style={{ padding: '4px' }}>✨ GENERATE NEW</button>
             <button className="btn btn-secondary btn-sm" onClick={() => handleSendWhatsappMessage('SHOW ANALYTICS')} style={{ padding: '4px' }}>📈 ANALYTICS</button>
             <button className="btn btn-secondary btn-sm" onClick={() => handleSendWhatsappMessage('POST NOW')} style={{ padding: '4px', gridColumn: 'span 2' }}>🚀 POST NOW</button>
+            <button className="btn btn-primary btn-sm" onClick={() => handleSendWhatsappMessage('AUTOPILOT RUN')} style={{ padding: '4px', gridColumn: 'span 2', backgroundColor: 'var(--brand-accent)', borderColor: 'var(--brand-accent)' }}>🤖 RUN AUTOPILOT</button>
           </div>
 
           {/* Traditional reply options */}
