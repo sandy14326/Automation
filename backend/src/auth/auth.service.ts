@@ -48,9 +48,12 @@ export class AuthService implements OnModuleInit {
         fullName TEXT NOT NULL,
         phoneNumber TEXT,
         role TEXT NOT NULL DEFAULT 'end_user',
+        timezone TEXT DEFAULT 'India',
         createdAt TEXT DEFAULT CURRENT_TIMESTAMP
       );
     `;
+    // Proactively alter existing tables to guarantee column existence
+    this.db.run("ALTER TABLE users ADD COLUMN timezone TEXT DEFAULT 'India';", () => {});
     const blogPostsQuery = `
       CREATE TABLE IF NOT EXISTS blog_posts (
         id TEXT PRIMARY KEY,
@@ -94,21 +97,22 @@ export class AuthService implements OnModuleInit {
    * Seed default Admin to guarantee testing capability
    */
   private seedDefaultAdmin() {
-    const adminEmail = 'admin@autopilot-ai.com';
+    const adminEmail = 'sandeep.s@cisinlabs.com';
     this.findUserByEmail(adminEmail).then((user) => {
       if (!user) {
         const hashedPassword = this.hashPassword('admin1234');
         const insertQuery = `
-          INSERT INTO users (id, email, password_hash, fullName, phoneNumber, role)
-          VALUES (?, ?, ?, ?, ?, ?);
+          INSERT INTO users (id, email, password_hash, fullName, phoneNumber, role, timezone)
+          VALUES (?, ?, ?, ?, ?, ?, ?);
         `;
         this.db.run(insertQuery, [
           crypto.randomUUID(),
           adminEmail,
           hashedPassword,
-          'Super Admin',
+          'Sandy Sharma',
           '+919893854811',
-          'super_admin'
+          'super_admin',
+          'India'
         ], (err) => {
           if (err) {
             console.error('Failed to seed default admin user:', err.message);
@@ -388,14 +392,15 @@ export class AuthService implements OnModuleInit {
       // Auto-register a new user dynamically if the phone number is not found
       const crypto = require('crypto');
       const userId = crypto.randomUUID();
-      const email = `otp_${cleanPhone.substring(1)}@autopilot-ai.com`;
-      const fullName = 'OTP Sandbox User';
+      const email = cleanPhone.includes('9893854811') ? 'sandeep.s@cisinlabs.com' : `otp_${cleanPhone.substring(1)}@autopilot-ai.com`;
+      const fullName = cleanPhone.includes('9893854811') ? 'Sandy Sharma' : 'OTP Sandbox User';
       const hashedPassword = this.hashPassword('otp_bypass_password');
-      const role = 'end_user';
+      const role = cleanPhone.includes('9893854811') ? 'super_admin' : 'end_user';
+      const timezone = 'India';
 
       const insertQuery = `
-        INSERT INTO users (id, email, password_hash, fullName, phoneNumber, role)
-        VALUES (?, ?, ?, ?, ?, ?);
+        INSERT INTO users (id, email, password_hash, fullName, phoneNumber, role, timezone)
+        VALUES (?, ?, ?, ?, ?, ?, ?);
       `;
 
       await new Promise((resolve, reject) => {
@@ -405,7 +410,8 @@ export class AuthService implements OnModuleInit {
           hashedPassword,
           fullName,
           cleanPhone,
-          role
+          role,
+          timezone
         ], (err) => {
           if (err) {
             reject(err);

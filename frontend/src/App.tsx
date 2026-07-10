@@ -171,7 +171,12 @@ export default function App() {
   const [regPassword, setRegPassword] = useState('');
   const [regOrgName, setRegOrgName] = useState('');
   const [regPhoneInput, setRegPhoneInput] = useState('');
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<any>({
+    fullName: 'Sandy Sharma',
+    email: 'sandeep.s@cisinlabs.com',
+    timezone: 'India',
+    role: 'super_admin'
+  });
   const [loginMethod, setLoginMethod] = useState<'email' | 'otp'>('email');
 
   // Notification settings
@@ -901,7 +906,23 @@ export default function App() {
                 <Sparkles size={12} />
                 <span>Credits: 84 / 100</span>
               </div>
-              <div className="avatar-placeholder" style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: 'var(--brand-accent)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.85rem' }}>
+              <div 
+                className="avatar-placeholder" 
+                onClick={() => navigateTo('profile')}
+                style={{ 
+                  width: 36, 
+                  height: 36, 
+                  borderRadius: '50%', 
+                  backgroundColor: 'var(--brand-accent)', 
+                  color: '#fff', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  fontWeight: 'bold', 
+                  fontSize: '0.85rem',
+                  cursor: 'pointer' 
+                }}
+              >
                 {currentUser ? currentUser.fullName.split(' ').map((n: string) => n[0]).join('').slice(0,2).toUpperCase() : 'JD'}
               </div>
             </div>
@@ -2537,20 +2558,34 @@ export default function App() {
                   <h3 className="mb-md">Profile Details</h3>
                   <div className="form-group">
                     <label className="form-label">Full Name</label>
-                    <input type="text" className="form-input" defaultValue="Jane Developer" />
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      value={currentUser?.fullName || 'Sandy Sharma'} 
+                      onChange={(e) => setCurrentUser({ ...currentUser, fullName: e.target.value })} 
+                    />
                   </div>
 
                   <div className="form-group">
                     <label className="form-label">Email Address</label>
-                    <input type="email" className="form-input" defaultValue="jane@company.com" readOnly />
+                    <input 
+                      type="email" 
+                      className="form-input" 
+                      value={currentUser?.email || 'sandeep.s@cisinlabs.com'} 
+                      readOnly 
+                    />
                   </div>
 
                   <div className="form-group">
                     <label className="form-label">Target Timezone</label>
-                    <select className="form-input" defaultValue="America/New_York">
+                    <select 
+                      className="form-input" 
+                      value={currentUser?.timezone || 'India'} 
+                      onChange={(e) => setCurrentUser({ ...currentUser, timezone: e.target.value })}
+                    >
+                      <option value="India">India (IST)</option>
                       <option value="America/New_York">EST (GMT-5)</option>
                       <option value="Europe/London">GMT (London)</option>
-                      <option value="Asia/Kolkata">IST (GMT+5:30)</option>
                       <option value="UTC">UTC</option>
                     </select>
                   </div>
