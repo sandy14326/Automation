@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, Link2, Calendar as CalendarIcon, 
-  Edit3, CheckSquare, Layers, Bot, Sliders, Database, 
+  LayoutDashboard, Link2, 
+  Edit3, CheckSquare, Bot, Sliders, Database, 
   TrendingUp, Users, Bell, CreditCard, User, Folder, 
   LogOut, Sun, Moon, Plus, Trash2, Play, Check, 
   X, Send, Smartphone, Sparkles, 
@@ -796,11 +796,6 @@ export default function App() {
               <span>Monitoring Panel</span>
             </a>
             
-            <a className={`sidebar-item ${currentView === 'generator' ? 'active' : ''}`} onClick={() => navigateTo('generator')}>
-              <Bot size={18} />
-              <span>AI Content Engine</span>
-            </a>
-
             <a className={`sidebar-item ${currentView === 'queue' ? 'active' : ''}`} onClick={() => navigateTo('queue')}>
               <CheckSquare size={18} />
               <span>Content Queue</span>
@@ -809,11 +804,6 @@ export default function App() {
             <a className={`sidebar-item ${currentView === 'editor' ? 'active' : ''}`} onClick={() => navigateTo('editor')}>
               <Edit3 size={18} />
               <span>Content Editor</span>
-            </a>
-
-            <a className={`sidebar-item ${currentView === 'calendar' ? 'active' : ''}`} onClick={() => navigateTo('calendar')}>
-              <CalendarIcon size={18} />
-              <span>Content Calendar</span>
             </a>
 
             <div className="sidebar-section-title">Integrations</div>
@@ -838,11 +828,6 @@ export default function App() {
             <a className={`sidebar-item ${currentView === 'pricing' ? 'active' : ''}`} onClick={() => navigateTo('pricing')}>
               <CreditCard size={18} />
               <span>Plans & Pricing</span>
-            </a>
-
-            <a className={`sidebar-item ${currentView === 'categories' ? 'active' : ''}`} onClick={() => navigateTo('categories')}>
-              <Layers size={18} />
-              <span>Categories</span>
             </a>
 
             <div className="sidebar-section-title">Settings</div>
