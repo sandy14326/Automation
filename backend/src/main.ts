@@ -13,7 +13,7 @@ async function bootstrap() {
   // Enable Cross-Origin Resource Sharing (CORS) for frontend client connections
   app.enableCors();
   
-  const port = process.env.PORT || 3000;
+  const port = 3000;
   await app.listen(port);
   console.log(`[Autopilot AI Backend] Service initialized on: http://localhost:${port}`);
 }
