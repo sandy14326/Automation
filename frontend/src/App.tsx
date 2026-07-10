@@ -161,6 +161,7 @@ export default function App() {
   const [passwordInput, setPasswordInput] = useState('');
   const [phoneInput, setPhoneInput] = useState('');
   const [otpInput, setOtpInput] = useState('');
+  const [debugOtp, setDebugOtp] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState('');
   const [showMfaPrompt, setShowMfaPrompt] = useState(false);
 
@@ -314,6 +315,7 @@ export default function App() {
       alert('Please enter your registered phone number first.');
       return;
     }
+    setDebugOtp(null);
     try {
       const response = await fetch('http://localhost:3000/api/v1/auth/otp/send', {
         method: 'POST',
@@ -323,6 +325,9 @@ export default function App() {
       const data = await response.json();
       if (response.ok) {
         alert(data.message || 'OTP Code sent successfully!');
+        if (data.debugOtpCode) {
+          setDebugOtp(data.debugOtpCode);
+        }
       } else {
         alert(data.message || 'Failed to send OTP.');
       }
@@ -350,6 +355,7 @@ export default function App() {
         localStorage.setItem('auth_token', data.accessToken);
         setCurrentUser(data.user);
         setUserRole(data.user.role);
+        setDebugOtp(null);
         alert(`Welcome back, ${data.user.fullName}!`);
         navigateTo('dashboard');
       } else {
@@ -1087,6 +1093,30 @@ export default function App() {
                             value={otpInput}
                             onChange={(e) => setOtpInput(e.target.value)}
                           />
+                          {debugOtp && (
+                            <div style={{ 
+                              marginTop: '0.75rem', 
+                              padding: '0.75rem', 
+                              backgroundColor: 'rgba(255, 193, 7, 0.1)', 
+                              border: '1px solid #ffc107', 
+                              borderRadius: 'var(--radius-sm)', 
+                              fontSize: '0.8rem', 
+                              color: 'var(--text-secondary)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              animation: 'pulse 2s infinite'
+                            }}>
+                              <span>🔑 <strong>Sent Code:</strong> {debugOtp}</span>
+                              <button 
+                                className="btn btn-secondary btn-sm"
+                                style={{ padding: '2px 6px', fontSize: '0.7rem' }}
+                                onClick={() => setOtpInput(debugOtp)}
+                              >
+                                Auto-Fill
+                              </button>
+                            </div>
+                          )}
                         </div>
                         
                         <button className="btn btn-accent" style={{ width: '100%', padding: '0.75rem' }} onClick={handleVerifyOtp}>

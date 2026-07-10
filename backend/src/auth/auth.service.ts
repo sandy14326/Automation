@@ -396,7 +396,8 @@ export class AuthService implements OnModuleInit {
     // Print code in terminal for local debugging / testing copy-paste
     console.log(`\n🔑 [OTP CODE SERVICE] Generated verification code for ${cleanPhone}: "${otpCode}" (Valid for 5 minutes)\n`);
 
-    // Dispatch WhatsApp
+    // Dispatch WhatsApp (Temporarily bypassed for sandbox debugging)
+    /*
     try {
       await this.sendTwilioSms(
         cleanPhone,
@@ -405,10 +406,12 @@ export class AuthService implements OnModuleInit {
     } catch (e) {
       console.error('[Auth Service] Twilio output dispatch warning:', e.message);
     }
+    */
 
     return {
-      message: 'Verification code sent successfully!',
-      phoneNumber: cleanPhone
+      message: 'Verification code sent successfully! (View code on your screen)',
+      phoneNumber: cleanPhone,
+      debugOtpCode: otpCode
     };
   }
 
