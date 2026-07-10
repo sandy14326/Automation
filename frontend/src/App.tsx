@@ -128,7 +128,7 @@ export default function App() {
   const [currentView, setCurrentView] = useState<string>('landing'); // landing, login, register, dashboard, categories, queue, generator, editor, approval, whatsapp, calendar, linkedin, analytics, pricing, profile, admin, notifications, history, aisettings, team
   
   // App States
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [userRole, setUserRole] = useState<'super_admin' | 'content_manager' | 'end_user'>('end_user');
   const [isMfaEnabled, setIsMfaEnabled] = useState(false);
   const [categories, setCategories] = useState<Category[]>(initialCategories);
