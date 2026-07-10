@@ -2898,67 +2898,154 @@ export default function App() {
           WHATSAPP CHAT SIMULATOR WIDGET (With presets)
          ========================================== */}
       {currentView !== 'landing' && currentView !== 'login' && currentView !== 'register' && (
-        <div style={{ width: '320px', borderLeft: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', height: '100vh', display: 'flex', flexDirection: 'column', position: 'sticky', top: 0 }}>
-          <div style={{ padding: '1rem', backgroundColor: '#075e54', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#25d366' }}></div>
-            <div>
-              <strong style={{ fontSize: '0.85rem', display: 'block' }}>WhatsApp Sandbox</strong>
-              <span style={{ fontSize: '0.7rem', opacity: 0.8 }}>Autopilot AI Chatbot</span>
+        <div style={{ 
+          width: '340px', 
+          borderLeft: '1px solid var(--border-color)', 
+          backgroundColor: '#efeae2', // Iconic WhatsApp chat background color (beige)
+          height: '100vh', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          position: 'sticky', 
+          top: 0,
+          fontFamily: 'Segoe UI, Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu, Cantarell, Fira Sans, sans-serif'
+        }}>
+          {/* Header styled exactly like WhatsApp Web */}
+          <div style={{ 
+            padding: '0.75rem 1rem', 
+            backgroundColor: '#008069', // Official WhatsApp Web Teal Green
+            color: '#ffffff', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ 
+                width: '38px', 
+                height: '38px', 
+                borderRadius: '50%', 
+                backgroundColor: '#ffffff', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                fontWeight: 'bold',
+                color: '#008069',
+                fontSize: '1rem',
+                border: '1px solid rgba(255,255,255,0.2)'
+              }}>
+                WA
+              </div>
+              <div>
+                <strong style={{ fontSize: '0.85rem', display: 'block', color: '#ffffff' }}>WhatsApp Sandbox</strong>
+                <span style={{ fontSize: '0.7rem', opacity: 0.9, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#25d366' }}></span>
+                  Online
+                </span>
+              </div>
             </div>
           </div>
 
-          <div style={{ flex: 1, padding: '1rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem', backgroundColor: 'var(--bg-primary)' }}>
+          {/* Messages list with tail-bubble layout */}
+          <div style={{ 
+            flex: 1, 
+            padding: '1rem', 
+            overflowY: 'auto', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '0.6rem',
+            backgroundImage: 'radial-gradient(var(--border-color) 0.5px, transparent 0.5px), radial-gradient(var(--border-color) 0.5px, #efeae2 0.5px)',
+            backgroundSize: '20px 20px',
+            backgroundPosition: '0 0, 10px 10px'
+          }}>
             {whatsappChat.map((msg, idx) => (
               <div 
                 key={idx} 
                 style={{ 
                   maxWidth: '85%', 
-                  padding: '0.75rem', 
-                  borderRadius: '8px', 
+                  padding: '0.5rem 0.75rem', 
+                  borderRadius: msg.sender === 'user' ? '8px 8px 0px 8px' : '8px 8px 8px 0px',
                   alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-                  backgroundColor: msg.sender === 'user' ? '#dcf8c6' : 'var(--bg-secondary)',
-                  color: '#000',
-                  boxShadow: 'var(--shadow-sm)',
-                  fontSize: '0.8rem',
+                  backgroundColor: msg.sender === 'user' ? '#d9fdd3' : '#ffffff', // Official WhatsApp green vs white bubbles
+                  color: '#111b21', // WhatsApp text color
+                  boxShadow: '0 1px 0.5px rgba(11,20,26,.13)',
+                  fontSize: '0.825rem',
                   lineHeight: '1.4',
-                  whiteSpace: 'pre-wrap'
+                  whiteSpace: 'pre-wrap',
+                  position: 'relative'
                 }}
               >
                 {msg.text}
-                <span style={{ display: 'block', textAlign: 'right', fontSize: '0.65rem', color: '#666', marginTop: '0.25rem' }}>{msg.time}</span>
+                <span style={{ 
+                  display: 'block', 
+                  textAlign: 'right', 
+                  fontSize: '0.625rem', 
+                  color: '#667781', 
+                  marginTop: '0.25rem' 
+                }}>{msg.time}</span>
               </div>
             ))}
           </div>
 
-          {/* Quick command presets for sandbox testing */}
-          <div style={{ padding: '0.5rem', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.25rem', backgroundColor: 'var(--bg-tertiary)', borderTop: '1px solid var(--border-color)', fontSize: '0.75rem' }}>
-            <button className="btn btn-secondary btn-sm" onClick={() => handleSendWhatsappMessage('PAUSE')} style={{ padding: '4px' }}>⏸️ PAUSE</button>
-            <button className="btn btn-secondary btn-sm" onClick={() => handleSendWhatsappMessage('RESUME')} style={{ padding: '4px' }}>▶️ RESUME</button>
-            <button className="btn btn-secondary btn-sm" onClick={() => handleSendWhatsappMessage('GENERATE NEW')} style={{ padding: '4px' }}>✨ GENERATE NEW</button>
-            <button className="btn btn-secondary btn-sm" onClick={() => handleSendWhatsappMessage('SHOW ANALYTICS')} style={{ padding: '4px' }}>📈 ANALYTICS</button>
-            <button className="btn btn-secondary btn-sm" onClick={() => handleSendWhatsappMessage('POST NOW')} style={{ padding: '4px', gridColumn: 'span 2' }}>🚀 POST NOW</button>
-            <button className="btn btn-primary btn-sm" onClick={() => handleSendWhatsappMessage('AUTOPILOT RUN')} style={{ padding: '4px', gridColumn: 'span 2', backgroundColor: 'var(--brand-accent)', borderColor: 'var(--brand-accent)' }}>🤖 RUN AUTOPILOT</button>
+          {/* Preset Buttons Container */}
+          <div style={{ padding: '0.5rem', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.35rem', backgroundColor: '#f0f2f5', borderTop: '1px solid var(--border-color)' }}>
+            <button className="btn btn-secondary btn-sm" onClick={() => handleSendWhatsappMessage('PAUSE')} style={{ padding: '5px', fontSize: '0.75rem', border: '1px solid #e9edef', backgroundColor: '#ffffff', color: '#54656f' }}>⏸️ PAUSE</button>
+            <button className="btn btn-secondary btn-sm" onClick={() => handleSendWhatsappMessage('RESUME')} style={{ padding: '5px', fontSize: '0.75rem', border: '1px solid #e9edef', backgroundColor: '#ffffff', color: '#54656f' }}>▶️ RESUME</button>
+            <button className="btn btn-secondary btn-sm" onClick={() => handleSendWhatsappMessage('GENERATE NEW')} style={{ padding: '5px', fontSize: '0.75rem', border: '1px solid #e9edef', backgroundColor: '#ffffff', color: '#54656f' }}>✨ GENERATE NEW</button>
+            <button className="btn btn-secondary btn-sm" onClick={() => handleSendWhatsappMessage('SHOW ANALYTICS')} style={{ padding: '5px', fontSize: '0.75rem', border: '1px solid #e9edef', backgroundColor: '#ffffff', color: '#54656f' }}>📈 ANALYTICS</button>
+            <button className="btn btn-secondary btn-sm" onClick={() => handleSendWhatsappMessage('POST NOW')} style={{ padding: '5px', fontSize: '0.75rem', gridColumn: 'span 2', border: '1px solid #e9edef', backgroundColor: '#ffffff', color: '#54656f' }}>🚀 POST NOW</button>
+            <button className="btn btn-primary btn-sm" onClick={() => handleSendWhatsappMessage('AUTOPILOT RUN')} style={{ padding: '5px', fontSize: '0.75rem', gridColumn: 'span 2', backgroundColor: '#00a884', borderColor: '#00a884', color: '#ffffff' }}>🤖 RUN AUTOPILOT</button>
           </div>
 
-          {/* Traditional reply options */}
-          <div style={{ padding: '0.5rem', display: 'flex', gap: '0.25rem', backgroundColor: 'var(--bg-tertiary)', borderTop: '1px solid var(--border-color)' }}>
-            <button className="btn btn-secondary btn-sm" onClick={() => handleSendWhatsappMessage('1')} style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', flex: 1 }}>1 (Approve)</button>
-            <button className="btn btn-secondary btn-sm" onClick={() => handleSendWhatsappMessage('3')} style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', flex: 1 }}>3 (Reject)</button>
-            <button className="btn btn-secondary btn-sm" onClick={() => handleSendWhatsappMessage('4')} style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', flex: 1 }}>4 (Regen)</button>
+          {/* Verification presets */}
+          <div style={{ padding: '0.35rem 0.5rem', display: 'flex', gap: '0.35rem', backgroundColor: '#f0f2f5', borderTop: '1px solid var(--border-color)' }}>
+            <button className="btn btn-secondary btn-sm" onClick={() => handleSendWhatsappMessage('1')} style={{ fontSize: '0.75rem', padding: '0.25rem', flex: 1, backgroundColor: '#ffffff', border: '1px solid #e9edef', color: '#54656f' }}>1 (Approve)</button>
+            <button className="btn btn-secondary btn-sm" onClick={() => handleSendWhatsappMessage('3')} style={{ fontSize: '0.75rem', padding: '0.25rem', flex: 1, backgroundColor: '#ffffff', border: '1px solid #e9edef', color: '#54656f' }}>3 (Reject)</button>
+            <button className="btn btn-secondary btn-sm" onClick={() => handleSendWhatsappMessage('4')} style={{ fontSize: '0.75rem', padding: '0.25rem', flex: 1, backgroundColor: '#ffffff', border: '1px solid #e9edef', color: '#54656f' }}>4 (Regen)</button>
           </div>
 
-          <div style={{ padding: '0.75rem', borderTop: '1px solid var(--border-color)', display: 'flex', gap: '0.5rem' }}>
+          {/* Message Input container styled exactly like WhatsApp Web */}
+          <div style={{ 
+            padding: '0.5rem 0.75rem', 
+            backgroundColor: '#f0f2f5', // WhatsApp Web input footer gray
+            borderTop: '1px solid var(--border-color)', 
+            display: 'flex', 
+            alignItems: 'center',
+            gap: '0.5rem' 
+          }}>
             <input 
               type="text" 
               className="form-input" 
-              placeholder="Type command..." 
+              placeholder="Type a message" 
               value={whatsappInput}
               onChange={(e) => setWhatsappInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendWhatsappMessage()}
-              style={{ fontSize: '0.8rem', padding: '0.5rem' }}
+              style={{ 
+                fontSize: '0.85rem', 
+                padding: '0.45rem 0.75rem', 
+                backgroundColor: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                flex: 1,
+                boxShadow: '0 1px 1px rgba(0,0,0,0.05)'
+              }}
             />
-            <button className="btn btn-primary" onClick={() => handleSendWhatsappMessage()} style={{ padding: '0.5rem' }}>
-              <Send size={14} />
+            <button 
+              onClick={() => handleSendWhatsappMessage()} 
+              style={{ 
+                width: '36px', 
+                height: '36px', 
+                borderRadius: '50%', 
+                backgroundColor: '#00a884', // WhatsApp send button green
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#ffffff',
+                cursor: 'pointer',
+                boxShadow: '0 1px 1px rgba(0,0,0,0.1)'
+              }}
+            >
+              <Send size={15} />
             </button>
           </div>
         </div>
