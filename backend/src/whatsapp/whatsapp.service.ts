@@ -231,9 +231,13 @@ export class WhatsappService implements OnModuleInit {
   /**
    * Broadcasts a bulk one-shot message to all synced contacts
    */
-  async sendBulkBroadcast(message: string): Promise<{ total: number; sent: number; failed: number }> {
+  async sendBulkBroadcast(message: string, targetPhones?: string[]): Promise<{ total: number; sent: number; failed: number }> {
     this.logger.log(`Initiating broadcast campaign: "${message}"`);
-    const count = this.mockContacts.length;
+    let contactsToMessage = this.mockContacts;
+    if (targetPhones && targetPhones.length > 0) {
+      contactsToMessage = this.mockContacts.filter(c => targetPhones.includes(c.phoneNumber));
+    }
+    const count = contactsToMessage.length;
     
     if (count === 0) {
       return { total: 0, sent: 0, failed: 0 };
@@ -242,7 +246,7 @@ export class WhatsappService implements OnModuleInit {
     const token = process.env.WHAPI_API_TOKEN;
 
     // Simulate sending messages one by one
-    for (const contact of this.mockContacts) {
+    for (const contact of contactsToMessage) {
       this.logger.log(`Dispatching message to ${contact.name} (${contact.phoneNumber}): "${message}"`);
       
       if (token && token !== 'your_whapi_api_token_here' && token.trim() !== '') {

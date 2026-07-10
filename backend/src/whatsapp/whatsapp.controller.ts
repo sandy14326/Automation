@@ -55,8 +55,8 @@ export class WhatsappController {
   }
 
   @Post('broadcast')
-  async broadcast(@Body() body: { message: string }) {
-    const result = await this.whatsappService.sendBulkBroadcast(body.message);
+  async broadcast(@Body() body: { message: string; targetPhones?: string[] }) {
+    const result = await this.whatsappService.sendBulkBroadcast(body.message, body.targetPhones);
     return {
       message: 'Broadcast dispatched successfully',
       details: result,

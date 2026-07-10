@@ -194,6 +194,7 @@ export default function App() {
   // WhatsApp Broadcast States
   const [whatsappTab, setWhatsappTab] = useState<'settings' | 'broadcast'>('settings');
   const [syncedContacts, setSyncedContacts] = useState<{ name: string; phoneNumber: string }[]>([]);
+  const [selectedContactPhones, setSelectedContactPhones] = useState<string[]>([]);
   const [isSyncingContacts, setIsSyncingContacts] = useState(false);
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [isBroadcasting, setIsBroadcasting] = useState(false);
@@ -368,6 +369,7 @@ export default function App() {
 
   const handleSyncContacts = async () => {
     setIsSyncingContacts(true);
+    setSelectedContactPhones([]);
     try {
       const response = await fetch('http://localhost:3000/api/v1/whatsapp/contacts/sync', {
         method: 'POST',
@@ -377,15 +379,17 @@ export default function App() {
       if (!response.ok) {
         throw new Error('Backend HTTP request failed.');
       }
-      
+
       const contactsRes = await fetch('http://localhost:3000/api/v1/whatsapp/contacts');
       const contactsList = await contactsRes.json();
       
       if (contactsList && contactsList.length > 0) {
-        setSyncedContacts(contactsList.map((c: any) => ({
+        const list = contactsList.map((c: any) => ({
           name: c.name,
           phoneNumber: c.phoneNumber
-        })));
+        }));
+        setSyncedContacts(list);
+        setSelectedContactPhones(list.map((c: any) => c.phoneNumber));
         setIsSyncingContacts(false);
         alert(`Successfully fetched ${contactsList.length} live contacts from +91 9893854811!`);
         return;
@@ -396,16 +400,32 @@ export default function App() {
 
     // Fallback Mock Data
     setTimeout(() => {
-      setSyncedContacts([
+      const mockList = [
         { name: 'Amit Sharma (Investor)', phoneNumber: '+91 98111 22233' },
         { name: 'Sarah Jenkins (Marketing)', phoneNumber: '+91 98777 88899' },
         { name: 'Rajesh Patel (Co-founder)', phoneNumber: '+91 90111 22233' },
         { name: 'Michael Scott (Client)', phoneNumber: '+1 (555) 123-4567' },
         { name: 'Elena Rostova (SaaS Advisor)', phoneNumber: '+44 77123 45678' }
-      ]);
+      ];
+      setSyncedContacts(mockList);
+      setSelectedContactPhones(mockList.map(c => c.phoneNumber));
       setIsSyncingContacts(false);
       alert('Synced 5 contacts associated with +91 9893854811 successfully! (Sandbox Simulator)');
     }, 2000);
+  };
+
+  const toggleSelectContact = (phone: string) => {
+    setSelectedContactPhones(prev => 
+      prev.includes(phone) ? prev.filter(p => p !== phone) : [...prev, phone]
+    );
+  };
+
+  const toggleSelectAllContacts = () => {
+    if (selectedContactPhones.length === syncedContacts.length) {
+      setSelectedContactPhones([]);
+    } else {
+      setSelectedContactPhones(syncedContacts.map(c => c.phoneNumber));
+    }
   };
 
   const handleBroadcastOneShot = async () => {
@@ -413,8 +433,9 @@ export default function App() {
       alert('Please compose a message first.');
       return;
     }
-    if (syncedContacts.length === 0) {
-      alert('Please sync contacts first.');
+    const targetContacts = syncedContacts.filter(c => selectedContactPhones.includes(c.phoneNumber));
+    if (targetContacts.length === 0) {
+      alert('Please select/check at least one contact to broadcast.');
       return;
     }
 
@@ -426,13 +447,16 @@ export default function App() {
       await fetch('http://localhost:3000/api/v1/whatsapp/broadcast', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: broadcastMessage })
+        body: JSON.stringify({ 
+          message: broadcastMessage,
+          targetPhones: selectedContactPhones
+        })
       });
     } catch (e) {
       console.log('Backend server is offline. Simulating broadcast logs locally.', e);
     }
 
-    const total = syncedContacts.length;
+    const total = targetContacts.length;
     let index = 0;
 
     const interval = setInterval(() => {
@@ -440,11 +464,11 @@ export default function App() {
         clearInterval(interval);
         setIsBroadcasting(false);
         setBroadcastMessage('');
-        alert('One-shot broadcast sent to all contacts successfully!');
+        alert(`One-shot broadcast sent to ${total} selected contacts successfully!`);
         return;
       }
 
-      const contact = syncedContacts[index];
+      const contact = targetContacts[index];
       setBroadcastLogs(prev => [...prev, `[${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}] Dispatching to ${contact.name} (${contact.phoneNumber})... SUCCESS`]);
       
       // Update simulator chat
@@ -2144,6 +2168,13 @@ export default function App() {
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                           <thead>
                             <tr style={{ borderBottom: '1px solid var(--border-color)', textAlign: 'left', color: 'var(--text-tertiary)' }}>
+                              <th style={{ padding: '0.5rem', width: '40px', textAlign: 'center' }}>
+                                <input 
+                                  type="checkbox" 
+                                  checked={selectedContactPhones.length === syncedContacts.length && syncedContacts.length > 0}
+                                  onChange={toggleSelectAllContacts}
+                                />
+                              </th>
                               <th style={{ padding: '0.5rem' }}>Contact Name</th>
                               <th style={{ padding: '0.5rem' }}>Phone Number</th>
                             </tr>
@@ -2151,6 +2182,13 @@ export default function App() {
                           <tbody>
                             {syncedContacts.map((c, i) => (
                               <tr key={i} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                <td style={{ padding: '0.5rem', textAlign: 'center' }}>
+                                  <input 
+                                    type="checkbox" 
+                                    checked={selectedContactPhones.includes(c.phoneNumber)}
+                                    onChange={() => toggleSelectContact(c.phoneNumber)}
+                                  />
+                                </td>
                                 <td style={{ padding: '0.5rem', fontWeight: 500 }}>{c.name}</td>
                                 <td style={{ padding: '0.5rem', fontFamily: 'monospace' }}>{c.phoneNumber}</td>
                               </tr>
@@ -2165,7 +2203,7 @@ export default function App() {
                   <div className="card">
                     <h3>One-Shot Bulk Broadcast</h3>
                     <p style={{ fontSize: '0.9rem', margin: '0.5rem 0 1rem' }}>
-                      Compose a marketing alert or published article link, and broadcast it to all {syncedContacts.length} synced contacts in one shot.
+                      Compose a marketing alert or published article link, and broadcast it to the {selectedContactPhones.length} checked contacts in one shot.
                     </p>
 
                     <div className="form-group">
