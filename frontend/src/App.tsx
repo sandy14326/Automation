@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, Link2, 
   Edit3, CheckSquare, Bot, Sliders, Database, 
-  TrendingUp, Users, Bell, CreditCard, User, Folder, 
+  TrendingUp, Users, User, 
   LogOut, Sun, Moon, Plus, Trash2, Play, Check, 
   X, Send, Smartphone, Sparkles, 
   RefreshCw, ChevronRight, ChevronLeft, 
@@ -813,16 +813,11 @@ export default function App() {
               <span>WhatsApp Integration</span>
             </a>
 
-            <div className="sidebar-section-title">Analytics & Billing</div>
+            <div className="sidebar-section-title">Analytics</div>
 
             <a className={`sidebar-item ${currentView === 'analytics' ? 'active' : ''}`} onClick={() => navigateTo('analytics')}>
               <TrendingUp size={18} />
               <span>Analytics & Metrics</span>
-            </a>
-
-            <a className={`sidebar-item ${currentView === 'pricing' ? 'active' : ''}`} onClick={() => navigateTo('pricing')}>
-              <CreditCard size={18} />
-              <span>Plans & Pricing</span>
             </a>
 
             <div className="sidebar-section-title">Settings</div>
@@ -842,15 +837,7 @@ export default function App() {
               <span>AI Configuration</span>
             </a>
 
-            <a className={`sidebar-item ${currentView === 'notifications' ? 'active' : ''}`} onClick={() => navigateTo('notifications')}>
-              <Bell size={18} />
-              <span>Notifications Center</span>
-            </a>
 
-            <a className={`sidebar-item ${currentView === 'history' ? 'active' : ''}`} onClick={() => navigateTo('history')}>
-              <Folder size={18} />
-              <span>Publishing History</span>
-            </a>
 
             {userRole === 'super_admin' && (
               <a className={`sidebar-item ${currentView === 'admin' ? 'active' : ''}`} onClick={() => navigateTo('admin')}>
