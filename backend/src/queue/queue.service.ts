@@ -93,8 +93,7 @@ export class QueueService implements OnModuleInit {
       for (const item of rows) {
         console.log(`[QueueService] Found scheduled post ready to publish: "${item.title}" (Queue ID: ${item.queue_id})`);
 
-        const token = process.env.LINKEDIN_ACCESS_TOKEN;
-        const urn = process.env.LINKEDIN_MEMBER_URN;
+        const { token, urn } = await this.linkedinService.getActiveCredentials();
 
         let publishLog = '';
         let success = true;

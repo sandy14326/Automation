@@ -150,11 +150,7 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [customCategoryInput, setCustomCategoryInput] = useState('');
   
-  // LinkedIn connection state
-  const [linkedinAccounts, setLinkedinAccounts] = useState([
-    { id: 'acc-1', name: 'Jane Dev (Personal Profile)', type: 'Profile', connected: true, status: 'Active' },
-    { id: 'acc-2', name: 'DevOps Solutions (Company Page)', type: 'Company Page', connected: false, status: 'Not Connected' }
-  ]);
+
 
   // Auth Inputs
   const [emailInput, setEmailInput] = useState('');
@@ -220,6 +216,11 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  // Load LinkedIn profiles on boot
+  useEffect(() => {
+    fetchLinkedinAccounts();
+  }, []);
 
   // Sync simulator notification when posts change
   useEffect(() => {
@@ -710,6 +711,139 @@ export default function App() {
         }
       }
     }, 1000);
+  };
+
+  // LinkedIn Form States
+  const [linkedinEmail, setLinkedinEmail] = useState('');
+  const [linkedinPassword, setLinkedinPassword] = useState('');
+  const [linkedinProfileName, setLinkedinProfileName] = useState('');
+  const [linkedinAuthMethod, setLinkedinAuthMethod] = useState('password_passkey'); // password_passkey, oauth_token, session_cookie
+  const [linkedinAccessToken, setLinkedinAccessToken] = useState('');
+  const [linkedinMemberUrn, setLinkedinMemberUrn] = useState('');
+  const [linkedinAccountsList, setLinkedinAccountsList] = useState<any[]>([]);
+  const [isLinkingProfile, setIsLinkingProfile] = useState(false);
+  const [linkedinLogs, setLinkedinLogs] = useState<string[]>([
+    '[2026-07-08 14:00] OAuth token verified: Refresh token expiration: 2026-09-08',
+    '[2026-07-08 14:01] GET request to https://api.linkedin.com/v2/me -- Status 200 OK',
+    '[2026-07-08 14:02] Query user organization URN memberships returned 1 profile scope',
+    '[2026-07-08 14:03] Token warning: URN token authorization scopes check passed.'
+  ]);
+
+  const fetchLinkedinAccounts = async () => {
+    try {
+      const res = await fetch('http://localhost:3000/api/v1/linkedin/accounts');
+      if (res.ok) {
+        const data = await res.json();
+        setLinkedinAccountsList(data);
+      }
+    } catch (e) {
+      console.log('Failed to fetch LinkedIn accounts:', e);
+    }
+  };
+
+  useEffect(() => {
+    if (currentView === 'linkedin') {
+      fetchLinkedinAccounts();
+    }
+  }, [currentView]);
+
+  const handleLinkLinkedinAccount = async () => {
+    if (!linkedinProfileName.trim() || !linkedinEmail.trim()) {
+      alert('Please enter both Profile Name and Username/Email.');
+      return;
+    }
+    
+    setIsLinkingProfile(true);
+    setLinkedinLogs(prev => [
+      ...prev,
+      `[${new Date().toLocaleTimeString()}] Initiating connection to profile: "${linkedinProfileName}"`,
+      `[${new Date().toLocaleTimeString()}] Authenticating via ${linkedinAuthMethod === 'password_passkey' ? 'credentials' : linkedinAuthMethod === 'session_cookie' ? 'session cookie' : 'access token'}...`
+    ]);
+
+    // Simulate login logs
+    setTimeout(() => {
+      setLinkedinLogs(prev => [
+        ...prev,
+        `[${new Date().toLocaleTimeString()}] Resolving member scopes and auth projection...`,
+        `[${new Date().toLocaleTimeString()}] Retrieved member identity: "${linkedinProfileName}"`
+      ]);
+    }, 1000);
+
+    setTimeout(async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/v1/linkedin/accounts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: linkedinProfileName,
+            login_id: linkedinEmail,
+            password: linkedinPassword,
+            auth_method: linkedinAuthMethod,
+            access_token: linkedinAccessToken,
+            member_urn: linkedinMemberUrn
+          })
+        });
+
+        if (response.ok) {
+          setLinkedinLogs(prev => [
+            ...prev,
+            `[${new Date().toLocaleTimeString()}] SUCCESS: Profile linked and verified successfully!`
+          ]);
+          setLinkedinProfileName('');
+          setLinkedinEmail('');
+          setLinkedinPassword('');
+          setLinkedinAccessToken('');
+          setLinkedinMemberUrn('');
+          await fetchLinkedinAccounts();
+        } else {
+          setLinkedinLogs(prev => [
+            ...prev,
+            `[${new Date().toLocaleTimeString()}] ERROR: Connection rejected by authentication verification gateway.`
+          ]);
+        }
+      } catch (e) {
+        setLinkedinLogs(prev => [
+          ...prev,
+          `[${new Date().toLocaleTimeString()}] ERROR: Backend offline.`
+        ]);
+      } finally {
+        setIsLinkingProfile(false);
+      }
+    }, 2000);
+  };
+
+  const handleDeleteLinkedinAccount = async (id: string) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/v1/linkedin/accounts/${id}`, {
+        method: 'DELETE'
+      });
+      if (response.ok) {
+        setLinkedinLogs(prev => [
+          ...prev,
+          `[${new Date().toLocaleTimeString()}] Disconnected account: ${id}`
+        ]);
+        await fetchLinkedinAccounts();
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const handleSetActiveLinkedinAccount = async (id: string) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/v1/linkedin/accounts/${id}/active`, {
+        method: 'POST'
+      });
+      if (response.ok) {
+        setLinkedinLogs(prev => [
+          ...prev,
+          `[${new Date().toLocaleTimeString()}] Switch active default profile to account: ${id}`
+        ]);
+        await fetchLinkedinAccounts();
+      }
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   // Helper Actions
@@ -1470,17 +1604,23 @@ export default function App() {
                     </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      {linkedinAccounts.map(acc => (
-                        <div key={acc.id} className="flex-between" style={{ padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}>
-                          <div>
-                            <span style={{ fontSize: '0.875rem', fontWeight: 600, display: 'block' }}>
-                               {acc.id === 'acc-1' && currentUser ? `${currentUser.fullName} (Personal Profile)` : acc.name}
+                      {linkedinAccountsList.length === 0 ? (
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>No accounts linked.</p>
+                      ) : (
+                        linkedinAccountsList.map(acc => (
+                          <div key={acc.id} className="flex-between" style={{ padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-secondary)' }}>
+                            <div>
+                              <span style={{ fontSize: '0.875rem', fontWeight: 600, display: 'block' }}>
+                                 {acc.name}
+                              </span>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Auth: {acc.auth_method === 'password_passkey' ? 'Password' : 'Access Token'}</span>
+                            </div>
+                            <span className={`badge ${acc.is_active === 1 ? 'badge-success' : 'badge-secondary'}`}>
+                              {acc.is_active === 1 ? 'Active Default' : 'Inactive'}
                             </span>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Type: {acc.type}</span>
                           </div>
-                          <span className={`badge ${acc.connected ? 'badge-success' : 'badge-error'}`}>{acc.status}</span>
-                        </div>
-                      ))}
+                        ))
+                      )}
                     </div>
                   </div>
                   
@@ -2341,51 +2481,167 @@ export default function App() {
               <div className="flex-between mb-lg">
                 <div>
                   <h1>LinkedIn Integration Panel</h1>
-                  <p>Register OAuth connections, query company pages, and check validation states.</p>
+                  <p>Configure automated postings by linking LinkedIn Profiles or Company Pages. Autopilot behaves like a human to post according to your scheduled calendar spikes.</p>
                 </div>
               </div>
 
               <div className="grid-2">
+                {/* Left Column: Connected Profiles List */}
                 <div className="card">
-                  <h3 className="mb-md">Connected Accounts</h3>
+                  <h3 className="mb-md">Linked Profiles</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {linkedinAccounts.map(acc => (
-                      <div key={acc.id} className="flex-between" style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}>
-                        <div>
-                          <strong>
-                            {acc.id === 'acc-1' && currentUser ? `${currentUser.fullName} (Personal Profile)` : acc.name}
-                          </strong>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>Type: {acc.type}</div>
+                    {linkedinAccountsList.length === 0 ? (
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>No LinkedIn profiles connected yet. Use the form on the right to link one!</p>
+                    ) : (
+                      linkedinAccountsList.map(acc => (
+                        <div key={acc.id} className="flex-between" style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-secondary)' }}>
+                          <div>
+                            <strong style={{ fontSize: '0.9rem' }}>{acc.name}</strong>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', marginTop: '2px' }}>Email: {acc.login_id}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Auth: {acc.auth_method === 'password_passkey' ? 'Password' : acc.auth_method === 'session_cookie' ? 'li_at Cookie' : 'OAuth Access Token'}</div>
+                            {acc.is_active === 1 && <span className="badge badge-success mt-sm" style={{ display: 'inline-block' }}>Default Publishing Target</span>}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+                            <button 
+                              className={`btn ${acc.is_active === 1 ? 'btn-secondary' : 'btn-accent'} btn-sm`}
+                              onClick={() => handleSetActiveLinkedinAccount(acc.id)}
+                              disabled={acc.is_active === 1}
+                            >
+                              {acc.is_active === 1 ? 'Active Target' : 'Set as Active'}
+                            </button>
+                            <button 
+                              className="btn btn-secondary btn-sm" 
+                              style={{ color: 'var(--status-danger)' }}
+                              onClick={() => handleDeleteLinkedinAccount(acc.id)}
+                            >
+                              Disconnect
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex-center gap-sm">
-                          <span className={`badge ${acc.connected ? 'badge-success' : 'badge-error'}`}>{acc.status}</span>
-                          <button 
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => {
-                              setLinkedinAccounts(linkedinAccounts.map(a => a.id === acc.id ? { ...a, connected: !a.connected, status: !a.connected ? 'Active' : 'Not Connected' } : a));
-                            }}
-                          >
-                            {acc.connected ? 'Disconnect' : 'Connect'}
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
-
-                  <button className="btn btn-accent mt-lg" style={{ width: '100%' }} onClick={() => {
-                    alert('Redirecting to LinkedIn OAuth sandbox callback...');
-                  }}>
-                    Connect New Profile / Company Page
-                  </button>
                 </div>
 
+                {/* Right Column: Connect New Profile Form */}
                 <div className="card">
-                  <h3 className="mb-md">OAuth API Debug logs</h3>
-                  <div style={{ backgroundColor: 'var(--bg-tertiary)', padding: '1rem', borderRadius: 'var(--radius-md)', fontFamily: 'monospace', fontSize: '0.8rem', height: '200px', overflowY: 'auto' }}>
-                    <p style={{ color: 'var(--status-success)' }}>[2026-07-08 14:00] OAuth token verified: Refresh token expiration: 2026-09-08</p>
-                    <p>[2026-07-08 14:01] GET request to https://api.linkedin.com/v2/me -- Status 200 OK</p>
-                    <p>[2026-07-08 14:02] Query user organization URN memberships returned 1 profile scope</p>
-                    <p style={{ color: 'var(--status-warning)' }}>[2026-07-08 14:03] Token warning: URN token authorization scopes check passed.</p>
+                  <h3 className="mb-md">Link LinkedIn Account</h3>
+                  
+                  <div className="form-group">
+                    <label className="form-label">Profile / Company Name</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder="Sandy Sharma (Personal Profile)" 
+                      value={linkedinProfileName}
+                      onChange={(e) => setLinkedinProfileName(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">LinkedIn Username / Email</label>
+                    <input 
+                      type="email" 
+                      className="form-input" 
+                      placeholder="sandeep.s@cisinlabs.com" 
+                      value={linkedinEmail}
+                      onChange={(e) => setLinkedinEmail(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">LinkedIn Password / Passkey</label>
+                    <input 
+                      type="password" 
+                      className="form-input" 
+                      placeholder="••••••••••••" 
+                      value={linkedinPassword}
+                      onChange={(e) => setLinkedinPassword(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Authentication Method</label>
+                    <select 
+                      className="form-input" 
+                      value={linkedinAuthMethod} 
+                      onChange={(e) => setLinkedinAuthMethod(e.target.value)}
+                    >
+                      <option value="password_passkey">Direct Login Credentials (Username & Password)</option>
+                      <option value="oauth_token">OAuth Access Token API projection</option>
+                      <option value="session_cookie">Session Cookie (li_at Cookie Token)</option>
+                    </select>
+                  </div>
+
+                  {linkedinAuthMethod !== 'password_passkey' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '0.75rem', backgroundColor: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)', marginBottom: '1rem' }}>
+                      {linkedinAuthMethod === 'oauth_token' && (
+                        <>
+                          <div className="form-group">
+                            <label className="form-label" style={{ fontSize: '0.75rem' }}>OAuth Access Token</label>
+                            <input 
+                              type="text" 
+                              className="form-input" 
+                              placeholder="AQW..." 
+                              value={linkedinAccessToken} 
+                              onChange={(e) => setLinkedinAccessToken(e.target.value)}
+                              style={{ padding: '4px 8px', fontSize: '0.8rem' }}
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label" style={{ fontSize: '0.75rem' }}>Member / Organization URN</label>
+                            <input 
+                              type="text" 
+                              className="form-input" 
+                              placeholder="urn:li:person:XXXXXX" 
+                              value={linkedinMemberUrn} 
+                              onChange={(e) => setLinkedinMemberUrn(e.target.value)}
+                              style={{ padding: '4px 8px', fontSize: '0.8rem' }}
+                            />
+                          </div>
+                        </>
+                      )}
+                      {linkedinAuthMethod === 'session_cookie' && (
+                        <div className="form-group">
+                          <label className="form-label" style={{ fontSize: '0.75rem' }}>li_at Session Cookie Value</label>
+                          <textarea 
+                            className="form-input" 
+                            placeholder="paste your li_at cookie here..." 
+                            value={linkedinAccessToken} 
+                            onChange={(e) => setLinkedinAccessToken(e.target.value)}
+                            style={{ height: '60px', padding: '4px 8px', fontSize: '0.8rem', resize: 'none' }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <button 
+                    className="btn btn-accent" 
+                    style={{ width: '100%' }} 
+                    onClick={handleLinkLinkedinAccount}
+                    disabled={isLinkingProfile}
+                  >
+                    {isLinkingProfile ? 'Verifying & Linking Profile...' : 'Link LinkedIn Profile'}
+                  </button>
+
+                  <div className="mt-md" style={{ backgroundColor: 'var(--bg-tertiary)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px dashed var(--border-color)', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                    💡 <strong>Tip:</strong> In sandbox simulation mode, typing your login credentials above is sufficient. The AI publisher agent will securely act on your behalf to publish updates according to your automated queue.
+                  </div>
+                </div>
+
+                {/* Bottom Row spanning full width: Connection Debug Logs */}
+                <div className="card" style={{ gridColumn: 'span 2' }}>
+                  <h3 className="mb-md">OAuth API & Connection Debug logs</h3>
+                  <div style={{ backgroundColor: 'var(--bg-tertiary)', padding: '1rem', borderRadius: 'var(--radius-md)', fontFamily: 'monospace', fontSize: '0.8rem', height: '160px', overflowY: 'auto' }}>
+                    {linkedinLogs.map((log, index) => (
+                      <p key={index} style={{ 
+                        color: log.includes('SUCCESS') ? 'var(--status-success)' : log.includes('ERROR') ? 'var(--status-danger)' : log.includes('warning') ? 'var(--status-warning)' : 'inherit',
+                        marginBottom: '4px'
+                      }}>
+                        {log}
+                      </p>
+                    ))}
                   </div>
                 </div>
               </div>

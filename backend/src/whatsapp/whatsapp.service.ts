@@ -361,8 +361,7 @@ export class WhatsappService implements OnModuleInit {
       const title = 'Scaling Telemetry Architectures in Enterprise SaaS';
       const postContent = `🚀 Autonomous queue processing and real-time telemetry pipelines represent the core of agentic SaaS systems. By automating code validation, teams reduce deployment latency from hours to seconds.\n\nLearn more: http://autopilot-ai.com/scaling-telemetry #SaaS #AI #Engineering`;
       
-      const token = process.env.LINKEDIN_ACCESS_TOKEN;
-      const urn = process.env.LINKEDIN_MEMBER_URN;
+      const { token, urn } = await this.linkedinService.getActiveCredentials();
 
       let publishLog = '';
       try {
@@ -388,8 +387,7 @@ export class WhatsappService implements OnModuleInit {
         return 'There are no queued posts ready for immediate publication.';
       }
       
-      const token = process.env.LINKEDIN_ACCESS_TOKEN;
-      const urn = process.env.LINKEDIN_MEMBER_URN;
+      const { token, urn } = await this.linkedinService.getActiveCredentials();
 
       let publishLog = '';
       try {
@@ -440,8 +438,7 @@ export class WhatsappService implements OnModuleInit {
     }
 
     if (command === '1' || command === 'APPROVE') {
-      const token = process.env.LINKEDIN_ACCESS_TOKEN;
-      const urn = process.env.LINKEDIN_MEMBER_URN;
+      const { token, urn } = await this.linkedinService.getActiveCredentials();
 
       let publishLog = '';
       try {
